@@ -7,418 +7,506 @@
 //
 
 #import "UIView+YBLayout.h"
-#import "Masonry.h"
 
 @implementation UIView (YBLayout_OC)
 
 #pragma mark - 平铺俯视图(多个)
 /**
- 平铺俯视图(子试图在方法里面已经添加到父试图上面)
+ 平铺视图(self指的是参照试图)
 
- @param views 子试图数组(个数必须大于1)
+ @param layoutViews 需要布局的试图数组(个数必须大于1)
+ @param duration 布局位置
  @param interval 子试图的间隔
- @param duration 横向平铺还是纵向平铺
  @param edge 子试图与父试图的边缘
+ @param superView 父试图
  */
-- (void)yb_fill:(NSArray<UIView*>*)views interval:(CGFloat)interval duration:(YBLayoutDuration)duration edge:(UIEdgeInsets)edge {
+- (void)yb_fill:(NSArray<UIView*>*)layoutViews duration:(YBLayoutDuration)duration interval:(CGFloat)interval edge:(UIEdgeInsets)edge superview:(UIView *)superView {
     // 数组个数必须大于一个
-    assert(views.count > 1);
-    [views enumerateObjectsUsingBlock:^(UIView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [self addSubview:obj];
+    NSAssert(layoutViews.count > 1, @"数组个数必须大于1");
+    [layoutViews enumerateObjectsUsingBlock:^(UIView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        UIView *sView = [self getSuperWithLayoutView:obj superView:superView];
         if(duration == YBLayoutDurationHorizon) {
-            [obj mas_makeConstraints:^(MASConstraintMaker *make) {
-                if (idx == 0) {
-                    make.left.mas_equalTo(self.mas_left).offset(edge.left);
-                } else if (idx == views.count - 1) {
-                    make.right.mas_equalTo(self.mas_right).offset(-edge.right);
-                    make.left.mas_equalTo(views[idx - 1].mas_right).offset(interval);
-                    make.width.mas_equalTo(views.firstObject);
-                } else {
-                    make.left.mas_equalTo(views[idx - 1].mas_right).offset(interval);
-                    make.width.mas_equalTo(views.firstObject);
-                }
-                make.top.mas_equalTo(self.mas_top).offset(edge.top);
-                make.bottom.mas_equalTo(self.mas_bottom).offset(-edge.bottom);
-            }];
+            if (idx == 0) {
+                [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeLeft toItem:self attribute:NSLayoutAttributeLeft constant:edge.left layoutTypr:YBLayoutTypeLeft]];
+            } else if (idx == layoutViews.count - 1) {
+                [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeRight toItem:self attribute:NSLayoutAttributeRight constant:-edge.right layoutTypr:YBLayoutTypeRight]];
+                [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeLeft toItem:layoutViews[idx - 1] attribute:NSLayoutAttributeRight constant:interval layoutTypr:YBLayoutTypeLeft]];
+                [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeWidth toItem:layoutViews.firstObject attribute:NSLayoutAttributeWidth constant:0 layoutTypr:YBLayoutTypeWidth]];
+            } else {
+                [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeLeft toItem:layoutViews[idx - 1] attribute:NSLayoutAttributeRight constant:interval layoutTypr:YBLayoutTypeLeft]];
+                [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeWidth toItem:layoutViews.firstObject attribute:NSLayoutAttributeWidth constant:0 layoutTypr:YBLayoutTypeWidth]];
+            }
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeTop toItem:self attribute:NSLayoutAttributeTop constant:edge.top layoutTypr:YBLayoutTypeTop]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeBottom toItem:self attribute:NSLayoutAttributeBottom constant:-edge.bottom layoutTypr:YBLayoutTypeBottom]];
         }else{
-            [obj mas_makeConstraints:^(MASConstraintMaker *make) {
-                if (idx == 0) {
-                    make.top.mas_equalTo(self.mas_top).offset(edge.top);
-                } else if (idx == views.count - 1) {
-                    make.bottom.mas_equalTo(self.mas_bottom).offset(-edge.bottom);
-                    make.top.mas_equalTo(views[idx - 1].mas_bottom).offset(interval);
-                    make.height.mas_equalTo(views.firstObject);
-                } else {
-                    make.top.mas_equalTo(views[idx - 1].mas_bottom).offset(interval);
-                    make.height.mas_equalTo(views.firstObject);
-                }
-                make.left.mas_equalTo(self.mas_left).offset(edge.left);
-                make.right.mas_equalTo(self.mas_right).offset(-edge.right);
-            }];
+            if (idx == 0) {
+                [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeTop toItem:self attribute:NSLayoutAttributeTop constant:edge.top layoutTypr:YBLayoutTypeTop]];
+            } else if (idx == layoutViews.count - 1) {
+                [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeBottom toItem:self attribute:NSLayoutAttributeBottom constant:-edge.bottom layoutTypr:YBLayoutTypeBottom]];
+                [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeTop toItem:layoutViews[idx - 1] attribute:NSLayoutAttributeBottom constant:interval layoutTypr:YBLayoutTypeTop]];
+                [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeHeight toItem:layoutViews.firstObject attribute:NSLayoutAttributeHeight constant:0 layoutTypr:YBLayoutTypeHeight]];
+            } else {
+                [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeTop toItem:layoutViews[idx - 1] attribute:NSLayoutAttributeBottom constant:interval layoutTypr:YBLayoutTypeTop]];
+                [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeHeight toItem:layoutViews.firstObject attribute:NSLayoutAttributeHeight constant:0 layoutTypr:YBLayoutTypeHeight]];
+            }
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeLeft toItem:self attribute:NSLayoutAttributeLeft constant:edge.left layoutTypr:YBLayoutTypeLeft]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:obj attribute:NSLayoutAttributeRight toItem:self attribute:NSLayoutAttributeRight constant:-edge.right layoutTypr:YBLayoutTypeRight]];
         }
     }];
+}
+
+/**
+ 平铺俯视图(self指的是参照试图)
+ 
+ @param layoutViews 需要布局的子试图数组(个数必须大于1)
+ @param duration 布局位置
+ @param interval 子试图的间隔
+ @param edge 子试图与父试图的边缘
+ */
+- (void)yb_fill:(NSArray<UIView*>*)layoutViews duration:(YBLayoutDuration)duration interval:(CGFloat)interval edge:(UIEdgeInsets)edge {
+    [self yb_fill:layoutViews duration:duration interval:interval edge:edge superview:nil];
+}
+
+/**
+ 平铺俯视图(self指的是参照试图)
+ 
+ @param layoutViews 需要布局的试图数组(个数必须大于1)
+ @param duration 布局位置
+ */
+- (void)yb_fill:(NSArray<UIView*>*)layoutViews duration:(YBLayoutDuration)duration {
+    [self yb_fill:layoutViews duration:duration interval:0 edge:UIEdgeInsetsZero superview:nil];
 }
 
 #pragma mark - 平铺俯视图(单个)
 /**
- 平铺俯视图 (单个子试图)
+ 平铺视图 (self指的是参照试图)
 
- @param view 子试图
+ @param layoutView 要布局的试图
  @param edge 边距
- @param isAdd 是否需要添加到俯视图
+ @param superView 父试图
  */
-- (void)yb_fill:(UIView *)view edge:(UIEdgeInsets)edge isAdd:(BOOL)isAdd {
-    if (isAdd) {
-        [self addSubview:view];
-    }
-    [view mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.edges.mas_equalTo(edge);
-    }];
+- (void)yb_fill:(UIView *)layoutView edge:(UIEdgeInsets)edge superView:(UIView *)superView {
+    // 父试图
+    UIView *sView = [self getSuperWithLayoutView:layoutView superView:superView];
+    NSLayoutConstraint *topConstraint = [YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeTop toItem:self attribute:NSLayoutAttributeTop constant:edge.top layoutTypr:YBLayoutTypeTop];
+    NSLayoutConstraint *leftConstraint = [YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeLeft toItem:self attribute:NSLayoutAttributeLeft constant:edge.left layoutTypr:YBLayoutTypeLeft];
+    NSLayoutConstraint *bottomConstraint = [YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeBottom toItem:self attribute:NSLayoutAttributeBottom constant:-edge.bottom layoutTypr:YBLayoutTypeBottom];
+    NSLayoutConstraint *rightConstraint = [YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeRight toItem:self attribute:NSLayoutAttributeRight constant:-edge.right layoutTypr:YBLayoutTypeRight];
+    // 设置约束属性
+    [sView addConstraints:@[topConstraint, leftConstraint, bottomConstraint, rightConstraint]];
+}
+
+/**
+ 平铺视图 (self指的是参照试图)
+ 
+ @param layoutView 要布局的试图
+ @param edge 边距
+ */
+- (void)yb_fill:(UIView *)layoutView edge:(UIEdgeInsets)edge {
+    [self yb_fill:layoutView edge:edge superView:nil];
+}
+
+/**
+ 平铺视图 (self指的是参照试图)
+ 
+ @param layoutView 要布局的试图
+ */
+- (void)yb_fill:(UIView *)layoutView  {
+    [self yb_fill:layoutView edge:UIEdgeInsetsZero superView:nil];
 }
 
 #pragma mark - 设置试图的大小
 /**
- 设置试图的大小
+ 设置试图的大小(self指的是需要布局的试图)
 
  @param size 试图大小
  */
 - (void)yb_size:(CGSize)size {
-    [self mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.size.mas_equalTo(size);
-    }];
+    NSAssert(self.superview != nil, @"添加约束前必须要添加到父试图");
+    [self setConstraintWithType:YBLayoutTypeWidth constant:size.width];
+    [self setConstraintWithType:YBLayoutTypeHeight constant:size.height];
 }
 
 #pragma mark - 中间布局
 /**
- 中间布局
+ 中间布局(self指的是参照试图)
 
- @param view 子试图
+ @param layoutView 要布局的试图
  @param offset 子试图偏移量
- @param isAdd 是否添加
+ @param superView 父试图
  */
-- (void)yb_center:(UIView *)view offset:(UIOffset)offset isAdd:(BOOL)isAdd {
-    if (isAdd) {
-        [self addSubview:view];
-    }
-    [view mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.mas_equalTo(offset.horizontal);
-        make.centerY.mas_equalTo(offset.vertical);
-    }];
+- (void)yb_center:(UIView *)layoutView offset:(UIOffset)offset superView:(UIView *)superView {
+    UIView *sView = [self getSuperWithLayoutView:layoutView superView:superView];
+    [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeCenterX toItem:self attribute:NSLayoutAttributeCenterX constant:offset.horizontal layoutTypr:YBLayoutTypeCenterX]];
+    [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeCenterY toItem:self attribute:NSLayoutAttributeCenterY constant:offset.vertical layoutTypr:YBLayoutTypeCenterY]];
 }
 
 
 /**
- 中间布局(默认添加上了)
+ 中间布局(self指的是参照试图)
 
- @param view 子试图
+ @param layoutView 要布局的试图
  @param offset 子试图偏移量
  */
-- (void)yb_center:(UIView *)view offset:(UIOffset)offset{
-    [self yb_center:view offset:offset isAdd:YES];
+- (void)yb_center:(UIView *)layoutView offset:(UIOffset)offset{
+    [self yb_center:layoutView offset:offset superView:nil];
 }
 
 /**
- 中间布局(默认添加上了)
+ 中间布局(self指的是参照试图)
  
- @param view 子试图
+ @param layoutView 要布局的试图
  */
-- (void)yb_center:(UIView *)view{
-    [self yb_center:view offset:UIOffsetZero isAdd:YES];
+- (void)yb_center:(UIView *)layoutView{
+    [self yb_center:layoutView offset:UIOffsetZero superView:nil];
 }
 
 /**
- 中间布局
+ 中间布局(self指的是参照试图)
 
- @param view 子试图
+ @param layoutView 要布局的试图
  @param size 子试图大小
  @param offset 子试图偏移量
- @param isAdd 是否添加
+ @param superView 父试图
  */
-- (void)yb_center:(UIView *)view size:(CGSize)size offset:(UIOffset)offset isAdd:(BOOL)isAdd {
-    [self yb_center:view offset:offset isAdd:isAdd];
-    [view yb_size:size];
+- (void)yb_center:(UIView *)layoutView size:(CGSize)size offset:(UIOffset)offset superView:(UIView *)superView {
+    [self yb_center:layoutView offset:offset superView:superView];
+    [layoutView yb_size:size];
 }
 
 /**
- 中间布局(默认添加)
+ 中间布局(self指的是参照试图)
  
- @param view 子试图
+ @param layoutView 要布局的试图
  @param size 子试图大小
  @param offset 子试图偏移量
  */
-- (void)yb_center:(UIView *)view size:(CGSize)size offset:(UIOffset)offset {
-    [self yb_center:view offset:offset isAdd:YES];
-    [view yb_size:size];
+- (void)yb_center:(UIView *)layoutView size:(CGSize)size offset:(UIOffset)offset {
+    [self yb_center:layoutView offset:offset superView:nil];
+    [layoutView yb_size:size];
 }
 
 /**
- 中间布局(默认添加)
+ 中间布局(self指的是参照试图)
  
- @param view 子试图
+ @param layoutView 要布局的试图
  @param size 子试图大小
  */
-- (void)yb_center:(UIView *)view size:(CGSize)size {
-    [self yb_center:view offset:UIOffsetZero isAdd:YES];
-    [view yb_size:size];
+- (void)yb_center:(UIView *)layoutView size:(CGSize)size {
+    [self yb_center:layoutView offset:UIOffsetZero superView:nil];
+    [layoutView yb_size:size];
 }
 
 #pragma mark - 内部布局
 /**
- 内部试图布局
+ 内部试图布局(self指的是参照试图)
 
- @param view 子试图
- @param duration 子试图位于俯视图的方向
+ @param layoutView 要布局的试图
+ @param duration 布局位置
  @param offset 偏移量
- @param isAdd 是否添加
+ @param superView 父试图
  */
-- (void)yb_in:(UIView *)view duration:(YBLayoutIn)duration offset:(UIOffset)offset isAdd:(BOOL)isAdd {
-    if (isAdd) {
-        [self addSubview:view];
+- (void)yb_in:(UIView *)layoutView duration:(YBLayoutIn)duration offset:(UIOffset)offset superView:(UIView *)superView {
+    UIView *sView = [self getSuperWithLayoutView:layoutView superView:superView];
+    switch (duration) {
+        case YBLayoutInLeftTop:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeLeft toItem:self attribute:NSLayoutAttributeLeft constant:offset.horizontal layoutTypr:YBLayoutTypeLeft]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeTop toItem:self attribute:NSLayoutAttributeTop constant:offset.vertical layoutTypr:YBLayoutTypeTop]];
+            break;
+        case YBLayoutInLeftCenter:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeLeft toItem:self attribute:NSLayoutAttributeLeft constant:offset.horizontal layoutTypr:YBLayoutTypeLeft]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeCenterY toItem:self attribute:NSLayoutAttributeCenterY constant:offset.vertical layoutTypr:YBLayoutTypeCenterY]];
+            break;
+        case YBLayoutInLeftBottom:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeLeft toItem:self attribute:NSLayoutAttributeLeft constant:offset.horizontal layoutTypr:YBLayoutTypeLeft]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeBottom toItem:self attribute:NSLayoutAttributeBottom constant:offset.vertical layoutTypr:YBLayoutTypeBottom]];
+            break;
+        case YBLayoutInCenterTop:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeCenterX toItem:self attribute:NSLayoutAttributeCenterX constant:offset.horizontal layoutTypr:YBLayoutTypeCenterX]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeTop toItem:self attribute:NSLayoutAttributeTop constant:offset.vertical layoutTypr:YBLayoutTypeTop]];
+            break;
+        case YBLayoutInCenterCenter:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeCenterX toItem:self attribute:NSLayoutAttributeCenterX constant:offset.horizontal layoutTypr:YBLayoutTypeCenterX]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeCenterY toItem:self attribute:NSLayoutAttributeCenterY constant:offset.vertical layoutTypr:YBLayoutTypeCenterY]];
+            break;
+        case YBLayoutInCenterBottom:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeCenterX toItem:self attribute:NSLayoutAttributeCenterX constant:offset.horizontal layoutTypr:YBLayoutTypeCenterX]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeBottom toItem:self attribute:NSLayoutAttributeBottom constant:offset.vertical layoutTypr:YBLayoutTypeBottom]];
+            break;
+        case YBLayoutInRightTop:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeRight toItem:self attribute:NSLayoutAttributeRight constant:offset.horizontal layoutTypr:YBLayoutTypeRight]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeTop toItem:self attribute:NSLayoutAttributeTop constant:offset.vertical layoutTypr:YBLayoutTypeTop]];
+            break;
+        case YBLayoutInRightCenter:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeRight toItem:self attribute:NSLayoutAttributeRight constant:offset.horizontal layoutTypr:YBLayoutTypeRight]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeCenterY toItem:self attribute:NSLayoutAttributeCenterY constant:offset.vertical layoutTypr:YBLayoutTypeCenterY]];
+            break;
+        case YBLayoutInRightBottom:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeRight toItem:self attribute:NSLayoutAttributeRight constant:offset.horizontal layoutTypr:YBLayoutTypeRight]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeBottom toItem:self attribute:NSLayoutAttributeBottom constant:offset.vertical layoutTypr:YBLayoutTypeBottom]];
+            break;
     }
-    [view mas_makeConstraints:^(MASConstraintMaker *make) {
-        switch (duration) {
-            case YBLayoutInLeftTop:
-                make.left.mas_equalTo(self.mas_left).offset(offset.horizontal);
-                make.top.mas_equalTo(self.mas_top).offset(offset.vertical);
-                break;
-            case YBLayoutInLeftCenter:
-                make.left.mas_equalTo(self.mas_left).offset(offset.horizontal);
-                make.centerY.mas_equalTo(self.mas_centerY).offset(offset.vertical);
-                break;
-            case YBLayoutInLeftBottom:
-                make.left.mas_equalTo(self.mas_left).offset(offset.horizontal);
-                make.bottom.mas_equalTo(self.mas_bottom).offset(offset.vertical);
-                break;
-            case YBLayoutInCenterTop:
-                make.centerX.mas_equalTo(self.mas_centerX).offset(offset.horizontal);
-                make.top.mas_equalTo(self.mas_top).offset(offset.vertical);
-                break;
-            case YBLayoutInCenterCenter:
-                make.centerX.mas_equalTo(self.mas_centerX).offset(offset.horizontal);
-                make.centerY.mas_equalTo(self.mas_centerY).offset(offset.vertical);
-                break;
-            case YBLayoutInCenterBottom:
-                make.centerX.mas_equalTo(self.mas_centerX).offset(offset.horizontal);
-                make.bottom.mas_equalTo(self.mas_bottom).offset(offset.vertical);
-                break;
-            case YBLayoutInRightTop:
-                make.right.mas_equalTo(self.mas_right).offset(offset.horizontal);
-                make.top.mas_equalTo(self.mas_top).offset(offset.vertical);
-                break;
-            case YBLayoutInRightCenter:
-                make.right.mas_equalTo(self.mas_right).offset(offset.horizontal);
-                make.centerY.mas_equalTo(self.mas_centerY).offset(offset.vertical);
-                break;
-            case YBLayoutInRightBottom:
-                make.right.mas_equalTo(self.mas_right).offset(offset.horizontal);
-                make.bottom.mas_equalTo(self.mas_bottom).offset(offset.vertical);
-                break;
-        }
-    }];
 }
 
 /**
- 内部试图布局
+ 内部试图布局(self指的是参照试图)
  
- @param view 子试图
- @param duration 子试图位于俯视图的方向
+ @param layoutView 要布局的试图
+ @param duration 布局位置
  @param offset 偏移量
  */
-- (void)yb_in:(UIView *)view duration:(YBLayoutIn)duration offset:(UIOffset)offset{
-    [self yb_in:view duration:duration offset:offset isAdd:YES];
+- (void)yb_in:(UIView *)layoutView duration:(YBLayoutIn)duration offset:(UIOffset)offset{
+    [self yb_in:layoutView duration:duration offset:offset superView:nil];
 }
 
 /**
- 内部试图布局
+ 内部试图布局(self指的是参照试图)
  
- @param view 子试图
- @param duration 子试图位于俯视图的方向
+ @param layoutView 要布局的试图
+ @param duration 布局位置
  */
-- (void)yb_in:(UIView *)view duration:(YBLayoutIn)duration{
-    [self yb_in:view duration:duration offset:UIOffsetZero isAdd:YES];
+- (void)yb_in:(UIView *)layoutView duration:(YBLayoutIn)duration{
+    [self yb_in:layoutView duration:duration offset:UIOffsetZero superView:nil];
 }
 
 /**
- 内部试图布局
+ 内部试图布局(self指的是参照试图)
 
- @param view 子试图
- @param duration 子试图位于俯视图的方向
+ @param layoutView 要布局的试图
+ @param duration 布局位置
  @param size 大小
  @param offset 偏移量
- @param isAdd 是否添加
+ @param superView 父试图
  */
-- (void)yb_in:(UIView *)view duration:(YBLayoutIn)duration size:(CGSize)size offset:(UIOffset)offset isAdd:(BOOL)isAdd {
-    [self yb_in:view duration:duration offset:offset isAdd:isAdd];
-    [view yb_size:size];
+- (void)yb_in:(UIView *)layoutView duration:(YBLayoutIn)duration size:(CGSize)size offset:(UIOffset)offset superView:(UIView *)superView {
+    [self yb_in:layoutView duration:duration offset:offset superView:superView];
+    [layoutView yb_size:size];
 }
 
 /**
- 内部试图布局
+ 内部试图布局(self指的是参照试图)
  
- @param view 子试图
- @param duration 子试图位于俯视图的方向
+ @param layoutView 要布局的试图
+ @param duration 布局位置
  @param size 大小
  @param offset 偏移量
  */
-- (void)yb_in:(UIView *)view duration:(YBLayoutIn)duration size:(CGSize)size offset:(UIOffset)offset {
-    [self yb_in:view duration:duration size:size offset:offset isAdd:YES];
+- (void)yb_in:(UIView *)layoutView duration:(YBLayoutIn)duration size:(CGSize)size offset:(UIOffset)offset {
+    [self yb_in:layoutView duration:duration size:size offset:offset superView:nil];
 }
 
 /**
- 内部试图布局
+ 内部试图布局(self指的是参照试图)
  
- @param view 子试图
- @param duration 子试图位于俯视图的方向
+ @param layoutView 要布局的试图
+ @param duration 布局位置
  @param size 大小
  */
-- (void)yb_in:(UIView *)view duration:(YBLayoutIn)duration size:(CGSize)size {
-    [self yb_in:view duration:duration size:size offset:UIOffsetZero isAdd:YES];
+- (void)yb_in:(UIView *)layoutView duration:(YBLayoutIn)duration size:(CGSize)size {
+    [self yb_in:layoutView duration:duration size:size offset:UIOffsetZero superView:nil];
 }
 
 #pragma mark - 外部布局
 
 
 /**
- 外部布局子试图
+ 外部布局子试图(self指的是参照试图)
 
- @param view 子试图
- @param duration 方向
+ @param layoutView 要布局的试图
+ @param duration 布局位置
  @param offset 偏移量
- @param isAdd 是否添加
+ @param superView 父试图
  */
-- (void)yb_out:(UIView *)view duration:(YBLayoutOut)duration offset:(UIOffset)offset isAdd:(BOOL)isAdd {
-    if (isAdd) {
-        [self addSubview:view];
+- (void)yb_out:(UIView *)layoutView duration:(YBLayoutOut)duration offset:(UIOffset)offset superView:(UIView *)superView {
+    UIView *sView = [self getSuperWithLayoutView:layoutView superView:superView];
+    switch (duration) {
+        case YBLayoutOutAngleLeftTop:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeRight toItem:self attribute:NSLayoutAttributeLeft constant:offset.horizontal layoutTypr:YBLayoutTypeRight]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeBottom toItem:self attribute:NSLayoutAttributeTop constant:offset.vertical layoutTypr:YBLayoutTypeBottom]];
+            break;
+        case YBLayoutOutAngleRightTop:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeLeft toItem:self attribute:NSLayoutAttributeRight constant:offset.horizontal layoutTypr:YBLayoutTypeLeft]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeBottom toItem:self attribute:NSLayoutAttributeTop constant:offset.vertical layoutTypr:YBLayoutTypeBottom]];
+            break;
+        case YBLayoutOutAngleLeftBottom:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeRight toItem:self attribute:NSLayoutAttributeLeft constant:offset.horizontal layoutTypr:YBLayoutTypeRight]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeTop toItem:self attribute:NSLayoutAttributeBottom constant:offset.vertical layoutTypr:YBLayoutTypeTop]];
+            break;
+        case YBLayoutOutAngleRightBottom:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeLeft toItem:self attribute:NSLayoutAttributeRight constant:offset.horizontal layoutTypr:YBLayoutTypeLeft]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeTop toItem:self attribute:NSLayoutAttributeBottom constant:offset.vertical layoutTypr:YBLayoutTypeTop]];
+            break;
+        case YBLayoutOutTopLeft:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeBottom toItem:self attribute:NSLayoutAttributeTop constant:offset.vertical layoutTypr:YBLayoutTypeBottom]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeLeft toItem:self attribute:NSLayoutAttributeLeft constant:offset.horizontal layoutTypr:YBLayoutTypeLeft]];
+            break;
+        case YBLayoutOutTopCenter:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeBottom toItem:self attribute:NSLayoutAttributeTop constant:offset.vertical layoutTypr:YBLayoutTypeBottom]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeCenterX toItem:self attribute:NSLayoutAttributeCenterX constant:offset.horizontal layoutTypr:YBLayoutTypeCenterX]];
+            break;
+        case YBLayoutOutTopRight:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeBottom toItem:self attribute:NSLayoutAttributeTop constant:offset.vertical layoutTypr:YBLayoutTypeBottom]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeRight toItem:self attribute:NSLayoutAttributeRight constant:offset.horizontal layoutTypr:YBLayoutTypeRight]];
+            break;
+        case YBLayoutOutLeftTop:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeRight toItem:self attribute:NSLayoutAttributeLeft constant:offset.horizontal layoutTypr:YBLayoutTypeRight]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeTop toItem:self attribute:NSLayoutAttributeTop constant:offset.vertical layoutTypr:YBLayoutTypeTop]];
+            break;
+        case YBLayoutOutLeftCenter:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeRight toItem:self attribute:NSLayoutAttributeLeft constant:offset.horizontal layoutTypr:YBLayoutTypeRight]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeCenterY toItem:self attribute:NSLayoutAttributeCenterY constant:offset.vertical layoutTypr:YBLayoutTypeCenterY]];
+            break;
+        case YBLayoutOutLeftBottom:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeRight toItem:self attribute:NSLayoutAttributeLeft constant:offset.horizontal layoutTypr:YBLayoutTypeRight]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeBottom toItem:self attribute:NSLayoutAttributeBottom constant:offset.vertical layoutTypr:YBLayoutTypeBottom]];
+            break;
+        case YBLayoutOutRightTop:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeLeft toItem:self attribute:NSLayoutAttributeRight constant:offset.horizontal layoutTypr:YBLayoutTypeLeft]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeTop toItem:self attribute:NSLayoutAttributeTop constant:offset.vertical layoutTypr:YBLayoutTypeTop]];
+            break;
+        case YBLayoutOutRightCenter:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeLeft toItem:self attribute:NSLayoutAttributeRight constant:offset.horizontal layoutTypr:YBLayoutTypeLeft]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeCenterY toItem:self attribute:NSLayoutAttributeCenterY constant:offset.vertical layoutTypr:YBLayoutTypeCenterY]];
+            break;
+        case YBLayoutOutRightBottom:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeLeft toItem:self attribute:NSLayoutAttributeRight constant:offset.horizontal layoutTypr:YBLayoutTypeLeft]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeBottom toItem:self attribute:NSLayoutAttributeBottom constant:offset.vertical layoutTypr:YBLayoutTypeBottom]];
+            break;
+        case YBLayoutOutBottomLeft:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeTop toItem:self attribute:NSLayoutAttributeBottom constant:offset.vertical layoutTypr:YBLayoutTypeTop]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeLeft toItem:self attribute:NSLayoutAttributeLeft constant:offset.horizontal layoutTypr:YBLayoutTypeLeft]];
+            break;
+        case YBLayoutOutBottomCenter:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeTop toItem:self attribute:NSLayoutAttributeBottom constant:offset.vertical layoutTypr:YBLayoutTypeTop]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeCenterX toItem:self attribute:NSLayoutAttributeCenterX constant:offset.horizontal layoutTypr:YBLayoutTypeCenterX]];
+            break;
+        case YBLayoutOutBottomRight:
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeTop toItem:self attribute:NSLayoutAttributeBottom constant:offset.vertical layoutTypr:YBLayoutTypeTop]];
+            [sView addConstraint:[YBLayoutConstraint constraintWithItem:layoutView attribute:NSLayoutAttributeRight toItem:self attribute:NSLayoutAttributeRight constant:offset.horizontal layoutTypr:YBLayoutTypeRight]];
+            break;
     }
-    [view mas_makeConstraints:^(MASConstraintMaker *make) {
-        switch (duration) {
-            case YBLayoutOutAngleLeftTop:
-                make.right.mas_equalTo(self.mas_left).offset(offset.horizontal);
-                make.bottom.mas_equalTo(self.mas_top).offset(offset.vertical);
-                break;
-            case YBLayoutOutAngleRightTop:
-                make.left.mas_equalTo(self.mas_right).offset(offset.horizontal);
-                make.bottom.mas_equalTo(self.mas_top).offset(offset.vertical);
-                break;
-            case YBLayoutOutAngleLeftBottom:
-                make.right.mas_equalTo(self.mas_left).offset(offset.horizontal);
-                make.top.mas_equalTo(self.mas_bottom).offset(offset.vertical);
-                break;
-            case YBLayoutOutAngleRightBottom:
-                make.left.mas_equalTo(self.mas_right).offset(offset.horizontal);
-                make.top.mas_equalTo(self.mas_bottom).offset(offset.vertical);
-                break;
-            case YBLayoutOutTopLeft:
-                make.bottom.mas_equalTo(self.mas_top).offset(offset.vertical);
-                make.left.mas_equalTo(self.mas_left).offset(offset.horizontal);
-                break;
-            case YBLayoutOutTopCenter:
-                make.bottom.mas_equalTo(self.mas_top).offset(offset.vertical);
-                make.centerX.mas_equalTo(self.mas_centerX).offset(offset.horizontal);
-                break;
-            case YBLayoutOutTopRight:
-                make.bottom.mas_equalTo(self.mas_top).offset(offset.vertical);
-                make.right.mas_equalTo(self.mas_right).offset(offset.horizontal);
-                break;
-            case YBLayoutOutLeftTop:
-                make.right.mas_equalTo(self.mas_left).offset(offset.horizontal);
-                make.top.mas_equalTo(self.mas_top).offset(offset.vertical);
-                break;
-            case YBLayoutOutLeftCenter:
-                make.right.mas_equalTo(self.mas_left).offset(offset.horizontal);
-                make.centerY.mas_equalTo(self.mas_centerY).offset(offset.vertical);
-                break;
-            case YBLayoutOutLeftBottom:
-                make.right.mas_equalTo(self.mas_left).offset(offset.horizontal);
-                make.bottom.mas_equalTo(self.mas_bottom).offset(offset.vertical);
-                break;
-            case YBLayoutOutRightTop:
-                make.left.mas_equalTo(self.mas_right).offset(offset.horizontal);
-                make.top.mas_equalTo(self.mas_top).offset(offset.vertical);
-                break;
-            case YBLayoutOutRightCenter:
-                make.left.mas_equalTo(self.mas_right).offset(offset.horizontal);
-                make.centerY.mas_equalTo(self.mas_centerY).offset(offset.vertical);
-                break;
-            case YBLayoutOutRightBottom:
-                make.left.mas_equalTo(self.mas_right).offset(offset.horizontal);
-                make.bottom.mas_equalTo(self.mas_bottom).offset(offset.vertical);
-                break;
-            case YBLayoutOutBottomLeft:
-                make.top.mas_equalTo(self.mas_bottom).offset(offset.vertical);
-                make.left.mas_equalTo(self.mas_left).offset(offset.horizontal);
-                break;
-            case YBLayoutOutBottomCenter:
-                make.top.mas_equalTo(self.mas_bottom).offset(offset.vertical);
-                make.centerX.mas_equalTo(self.mas_centerX).offset(offset.horizontal);
-                break;
-            case YBLayoutOutBottomRight:
-                make.top.mas_equalTo(self.mas_bottom).offset(offset.vertical);
-                make.right.mas_equalTo(self.mas_right).offset(offset.horizontal);
-                break;
+}
+
+/**
+ 外部布局子试图(self指的是参照试图)
+ 
+ @param layoutView 要布局的试图
+ @param duration 布局位置
+ @param offset 偏移量
+ */
+- (void)yb_out:(UIView *)layoutView duration:(YBLayoutOut)duration offset:(UIOffset)offset{
+    [self yb_out:layoutView duration:duration offset:offset superView:nil];
+}
+
+/**
+ 外部布局子试图(self指的是参照试图)
+ 
+ @param layoutView 要布局的试图
+ @param duration 布局位置
+ */
+- (void)yb_out:(UIView *)layoutView duration:(YBLayoutOut)duration{
+    [self yb_out:layoutView duration:duration offset:UIOffsetZero superView:nil];
+}
+
+
+/**
+ 外部布局子试图(self指的是参照试图)
+
+ @param layoutView 要布局的试图
+ @param duration 布局位置
+ @param size 大小
+ @param offset 偏移量
+ @param superView 父试图
+ */
+- (void)yb_out:(UIView *)layoutView duration:(YBLayoutOut)duration size:(CGSize)size offset:(UIOffset)offset superView:(UIView *)superView {
+    [self yb_out:layoutView duration:duration offset:offset superView:superView];
+    [layoutView yb_size:size];
+}
+
+/**
+ 外部布局子试图(self指的是参照试图)
+ 
+ @param layoutView 要布局的试图
+ @param duration 布局位置
+ @param size 大小
+ @param offset 偏移量
+ */
+- (void)yb_out:(UIView *)layoutView duration:(YBLayoutOut)duration size:(CGSize)size offset:(UIOffset)offset {
+    [self yb_out:layoutView duration:duration size:size offset:offset superView:nil];
+}
+
+/**
+ 外部布局子试图(self指的是参照试图)
+ 
+ @param layoutView 要布局的试图
+ @param duration 布局位置
+ @param size 大小
+ */
+- (void)yb_out:(UIView *)layoutView duration:(YBLayoutOut)duration size:(CGSize)size {
+    [self yb_out:layoutView duration:duration size:size offset:UIOffsetZero superView:nil];
+}
+
+#pragma mark - 添加试图
+/**
+ 获取父试图(self指的是参照试图)
+
+ @param layoutView 要布局的试图
+ @param superView 父试图
+ @return 返回要真正的父试图
+ */
+- (UIView *)getSuperWithLayoutView:(UIView *)layoutView superView:(UIView *)superView {
+    layoutView.translatesAutoresizingMaskIntoConstraints = NO;
+    if (layoutView.superview) {
+        return layoutView.superview;
+    }
+    if (superView) {
+        [superView addSubview:layoutView];
+    }
+    [self addSubview:layoutView];
+    return layoutView.superview;
+}
+
+#pragma mark - 约束
+
+/**
+ 获取指定的约束(self指的是需要布局的试图)
+
+ @param layoutType 约束类型
+ @return 返回自定义的约束
+ */
+- (YBLayoutConstraint *)constraintWithType:(YBLayoutType)layoutType {
+    for (YBLayoutConstraint * obj in self.superview.constraints) {
+        if (obj.firstItem == self) {
+            if ([obj isKindOfClass:[YBLayoutConstraint class]] && obj.layoutType == layoutType) {
+                return obj;
+            }
         }
-    }];
-}
-
-/**
- 外部布局子试图
- 
- @param view 子试图
- @param duration 方向
- @param offset 偏移量
- */
-- (void)yb_out:(UIView *)view duration:(YBLayoutOut)duration offset:(UIOffset)offset{
-    [self yb_out:view duration:duration offset:offset isAdd:YES];
-}
-
-/**
- 外部布局子试图
- 
- @param view 子试图
- @param duration 方向
- */
-- (void)yb_out:(UIView *)view duration:(YBLayoutOut)duration{
-    [self yb_out:view duration:duration offset:UIOffsetZero isAdd:YES];
+    }
+    if (layoutType == YBLayoutTypeWidth) {
+        YBLayoutConstraint *layoutConstraint = [YBLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeWidth toItem:nil attribute:NSLayoutAttributeWidth constant:self.frame.size.width layoutTypr:YBLayoutTypeWidth];
+        [self.superview addConstraint:layoutConstraint];
+        return layoutConstraint;
+    }
+    if (layoutType == YBLayoutTypeHeight) {
+        YBLayoutConstraint *layoutConstraint = [YBLayoutConstraint constraintWithItem:self attribute:NSLayoutAttributeHeight toItem:nil attribute:NSLayoutAttributeHeight constant:self.frame.size.height layoutTypr:YBLayoutTypeHeight];
+        [self.superview addConstraint: layoutConstraint];
+        return layoutConstraint;
+    }
+    NSAssert(NO, @"没有找到制定约束");
+    return nil;
 }
 
 
 /**
- 外部布局子试图
+ 设置指定约束(self指的是需要布局的试图)
 
- @param view 子试图
- @param duration 方向
- @param size 大小
- @param offset 偏移量
- @param isAdd 是否添加
+ @param layoutType 约束类型
+ @param constant 约束值
  */
-- (void)yb_out:(UIView *)view duration:(YBLayoutOut)duration size:(CGSize)size offset:(UIOffset)offset isAdd:(BOOL)isAdd {
-    [self yb_out:view duration:duration offset:offset isAdd:isAdd];
-    [view yb_size:size];
+- (void)setConstraintWithType:(YBLayoutType)layoutType constant:(CGFloat)constant {
+    YBLayoutConstraint *layoutConstraint = [self constraintWithType:layoutType];
+    layoutConstraint.constant = constant;
 }
 
-/**
- 外部布局子试图
- 
- @param view 子试图
- @param duration 方向
- @param size 大小
- @param offset 偏移量
- */
-- (void)yb_out:(UIView *)view duration:(YBLayoutOut)duration size:(CGSize)size offset:(UIOffset)offset {
-    [self yb_out:view duration:duration offset:offset isAdd:YES];
-    [view yb_size:size];
-}
-
-/**
- 外部布局子试图
- 
- @param view 子试图
- @param duration 方向
- @param size 大小
- */
-- (void)yb_out:(UIView *)view duration:(YBLayoutOut)duration size:(CGSize)size {
-    [self yb_out:view duration:duration offset:UIOffsetZero isAdd:YES];
-    [view yb_size:size];
-}
 
 @end

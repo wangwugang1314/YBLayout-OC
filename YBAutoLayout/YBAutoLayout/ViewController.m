@@ -33,13 +33,14 @@
     [super viewDidLoad];
     
     UITableView *tableView = [UITableView new];
+    tableView.backgroundColor = [UIColor orangeColor];
+    [self.view yb_fill:tableView edge:UIEdgeInsetsMake(10, 20, 30, 40)];
     tableView.delegate = self;
     tableView.dataSource = self;
     self.tableView = tableView;
     [tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:CellIdenfifier];
-    // 平铺父试图
-    [self.view yb_fill:tableView edge: UIEdgeInsetsZero isAdd:YES];
 }
+
 
 #pragma mark - UITableViewDataSource
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -65,7 +66,12 @@
     if (_dataArr == nil) {
         _dataArr = @[@"平铺(单个子试图)",
                      @"平铺(多个子试图横向)",
-                     @"平铺(多个子试图纵向)"];
+                     @"平铺(多个子试图纵向)",
+                     @"平铺(内部布局)",
+                     @"平铺(外部布局)",
+                     @"改变试图大小",
+                     @"获取指定约束",
+                     @"改变约束值"];
     }
     return _dataArr;
 }

@@ -7,10 +7,9 @@
 //
 
 #import "YBLayoutController01.h"
+#import "UIView+YBLayout.h"
 
 @interface YBLayoutController01 ()
-
-
 
 @end
 
@@ -18,7 +17,10 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.view.backgroundColor = [UIColor whiteColor];
+    
+    
+    [self.referenceView yb_fill:self.view0 edge:UIEdgeInsetsMake(10, 20, 30, 40)];
 }
+
 
 @end
